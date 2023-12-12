@@ -1,0 +1,91 @@
+# config.yaml
+# Feature Engineering 등에 사용되는 하이퍼파라미터를 추가하여 관리할 수 있습니다.
+
+name: DA23_Project2_SAMPLE
+memo: |
+    남겨둘 메모가 있다면 여기에.
+    여러 줄로도 작성 가능
+seed: 2023
+n_gpu: 0
+
+model:  # 프로젝트 1에서와 달리, 모델 클래스별로 args를 따로 관리하도록 약간만 수정했습니다.
+    type: ResNet
+    args: 
+        CNN:
+            cnn_hidden_list: [16, 32]
+            fc_hidden_list: [128, 64]
+            dropout_p: 0.2
+            batch_norm: false
+        LSTM:
+            lstm_hidden_dim : 16
+            lstm_n_layer: 2
+            bidirectional: true
+            fc_hidden_list: [128, 64]
+            dropout_p: 0.2
+            batch_norm: false
+        CRNN:
+            #input_size: input_size
+            #seq_len: seq_len
+            cnn_hidden_list: [4, 8]
+            lstm_hidden_dim: 16
+            lstm_n_layer: 2
+            bidirectional: True
+            fc_hidden_list : [128, 64]
+            dropout_p: 0.2
+            batch_norm: True
+        ResNet:
+            output_size : 1
+            num_blocks : 3
+
+dataset:
+    type: SensorDataset
+    args:
+        data_dir: data/
+        in_columns: # 가능한 feature의 종류는 총 15개 (dataset.py 참고)
+            ['ACC_x', 'ACC_y', 'ACC_z', #가속도
+            'GRVT_x', 'GRVT_y', 'GRVT_z', #중력가속도
+            'MAG_x', 'MAG_y', 'MAG_z', #자기장
+            'ORT_a_cos', 'ORT_a_sin', # 방향 azimuth
+            'ORT_p_cos', 'ORT_p_sin', # 방향 pitch
+            'ORT_r_cos', 'ORT_r_sin'] # 방향 roll
+        
+dataloader:
+    type: DataLoader
+    args:
+        batch_size: 128
+        shuffle: true
+        num_workers: 4
+
+optimizer:
+    type: Adam
+    args:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: true
+
+loss: BCEWithLogitsLoss  # BCELoss + Sigmoid
+
+lr_scheduler:
+    use: true
+    type: StepLR
+    args:
+        step_size: 10
+        gamma: 0.9
+
+metrics: [acc, f1, precision, recall]
+
+train:
+    epochs: 100  ##45에서 F1 = 0.8745
+    print_period: 5
+    save_dir: saved/
+    save_model_name: ResNet_model
+    save_period: 100
+    resume: false
+    resume_path: checkpoints/teamF_model.pt
+    tensorboard: true
+
+test:
+    metrics: [acc, f1, precision, recall]  # !!! 수정 금지 !!!
+    load_dir: saved/checkpoints/  # !!! 수정 금지 !!!
+    load_fname: teamF_model.pt  # !!! 제출 시 본인 팀명에 맞게 `teamX_model.pt`로 변경해주세요 !!!
+
